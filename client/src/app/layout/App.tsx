@@ -7,15 +7,15 @@ function App() {
   const location = useLocation();
   return (
     <Box sx={{ bgcolor: '#eeeeee', minHeight: '100vh' }}>
-       <CssBaseline />
-       {location.pathname === '/' ? <HomePage /> : (
-         <>
-           <NavBar />
-           <Container maxWidth='xl'>
-             <Outlet />
-           </Container>
-         </>
-       )}
+      <CssBaseline />
+      {location.pathname === '/' ? <HomePage /> : (
+        <>
+          <NavBar />
+          <Container maxWidth='xl'>
+            <Outlet />
+          </Container>
+        </>
+      )}
     </Box>
   )
 }
