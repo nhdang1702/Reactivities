@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import agent from "../api/agent"
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { EditProfileSchema } from "../schemas/editProfileSchema";
 
 export const useProfile = (id?: string, predicate?: string) => {
+    const [filter, setFilter] = useState<string | null>(null);
     const queryClient = useQueryClient();
 
     const { data: profile, isLoading: loadingProfile } = useQuery<Profile>({
@@ -15,7 +16,7 @@ export const useProfile = (id?: string, predicate?: string) => {
         enabled: !!id && !predicate
     })
 
-    const {data: photos, isLoading: loadingPhotos} = useQuery<Photo[]>({
+    const { data: photos, isLoading: loadingPhotos } = useQuery<Photo[]>({
         queryKey: ['photos', id],
         queryFn: async () => {
             const response = await agent.get<Photo[]>(`/profiles/${id}/photos`);
@@ -24,22 +25,35 @@ export const useProfile = (id?: string, predicate?: string) => {
         enabled: !!id && !predicate
     });
 
-    const {data: followings, isLoading: loadingFollowings} = useQuery<Profile[]>({
+    const { data: followings, isLoading: loadingFollowings } = useQuery<Profile[]>({
         queryKey: ['followings', id, predicate],
         queryFn: async () => {
-            const response = 
+            const response =
                 await agent.get<Profile[]>(`/profiles/${id}/follow-list?predicate=${predicate}`);
             return response.data;
         },
         enabled: !!id && !!predicate
     })
 
+    const { data: userActivities, isLoading: loadingUserActivities } = useQuery({
+        queryKey: ['user-activities', filter],
+        queryFn: async () => {
+            const response = await agent.get<Activity[]>(`/profiles/${id}/activities`, {
+                params: {
+                    filter
+                }
+            });
+            return response.data
+        },
+        enabled: !!id && !!filter
+    });
+
     const uploadPhoto = useMutation({
         mutationFn: async (file: Blob) => {
             const formData = new FormData();
             formData.append('file', file);
             const response = await agent.post('/profiles/add-photo', formData, {
-                headers: {'Content-Type': 'multipart/form-data'}
+                headers: { 'Content-Type': 'multipart/form-data' }
             });
             return response.data;
         },
@@ -126,13 +140,13 @@ export const useProfile = (id?: string, predicate?: string) => {
         },
         onSuccess: () => {
             queryClient.setQueryData(['profile', id], (profile: Profile) => {
-                queryClient.invalidateQueries({queryKey: ['followings', id, 'followers']})
+                queryClient.invalidateQueries({ queryKey: ['followings', id, 'followers'] })
                 if (!profile || profile.followersCount === undefined) return profile;
                 return {
                     ...profile,
                     following: !profile.following,
-                    followersCount: profile.following 
-                        ? profile.followersCount - 1 
+                    followersCount: profile.following
+                        ? profile.followersCount - 1
                         : profile.followersCount + 1
                 }
             })
@@ -155,6 +169,10 @@ export const useProfile = (id?: string, predicate?: string) => {
         updateProfile,
         updateFollowing,
         followings,
-        loadingFollowings
+        loadingFollowings,
+        userActivities,
+        loadingUserActivities,
+        setFilter,
+        filter
     }
 }
