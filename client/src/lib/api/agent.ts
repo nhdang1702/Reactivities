@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import { router } from "../../app/router/Routes";
 
 const sleep = (delay: number) => {
-    return new Promise(resolve => {   
+    return new Promise(resolve => {
         setTimeout(resolve, delay)
     });
 }
@@ -20,12 +20,12 @@ agent.interceptors.request.use(config => {
 
 agent.interceptors.response.use(
     async response => {
-        await sleep(1000);
+        if (import.meta.env.DEV) await sleep(1000);
         store.uiStore.isIdle()
         return response;
     },
     async error => {
-        await sleep(1000);
+        if (import.meta.env.DEV) await sleep(1000);
         store.uiStore.isIdle();
 
         const { status, data } = error.response;
@@ -50,7 +50,7 @@ agent.interceptors.response.use(
                 router.navigate('/not-found');
                 break;
             case 500:
-                router.navigate('/server-error', {state: {error: data}})
+                router.navigate('/server-error', { state: { error: data } })
                 break;
             default:
                 break;
